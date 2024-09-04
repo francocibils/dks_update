@@ -40,7 +40,7 @@ if app_mode == 'DKS - Inova':
         catalog_df = pd.read_excel(catalog, engine = 'openpyxl')
         st.success('Catalog file uploaded successfully.')
     else:
-        catalog_df = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog DKS MX.xlsx', engine = 'openpyxl')
+        catalog_df = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%20MX.xlsx', engine = 'openpyxl')
         st.info('Default catalog file used.')
 
     if st.button('Process file'):
