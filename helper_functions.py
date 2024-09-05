@@ -51,8 +51,8 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
 
     # Define all possible products and channels
     all_days = df['Date'].unique()
-    all_products = df['Product family'].unique()
-    all_channels = df['Channel'].unique()
+    all_products = ['ALL INOVA'] + keep_products
+    all_channels = catalog['CANAL'].unique()
 
     # Create a MultiIndex DataFrame with all combinations of products and channels
     multi_index = pd.MultiIndex.from_product([all_days, all_products, all_channels], names = ['Date', 'Product family', 'Channel'])
