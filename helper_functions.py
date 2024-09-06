@@ -66,14 +66,14 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
 
     # Combine Orders and Revenue into a single DataFrame
     result = pd.concat([orders_pivot.add_suffix(' - Orders'), revenue_pivot.add_suffix(' - Revenue')], axis = 1).reset_index()
-    
-    new_columns = []
+
+    new_columns = ['Date']
     for product_channel in orders_pivot.columns:
         new_columns.append(product_channel + ' - Orders')
         new_columns.append(product_channel + ' - Revenue')
 
-    result = result[new_columns].reset_index()
-
+    result = result[new_columns]
+    
     return df, result
     
 def processing_amazon_sellerboard(amz_df, amz_listing_df, date = False):
