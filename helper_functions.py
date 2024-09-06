@@ -72,7 +72,7 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
         new_columns.append(product_channel + ' - Orders')
         new_columns.append(product_channel + ' - Revenue')
 
-    result = result[new_columns]
+    result = result[new_columns].reset_index()
 
     return df, result
     
