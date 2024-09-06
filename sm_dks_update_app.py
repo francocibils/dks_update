@@ -54,7 +54,7 @@ if app_mode == 'DKS - Inova':
         # Convert the DataFrame to an Excel file in memory
         output = BytesIO()
         with pd.ExcelWriter(output, engine = 'xlsxwriter') as writer:
-            dks_sm.to_excel(writer, index=False, sheet_name = 'Supermetrics table')
+            dks_sm.to_excel(writer, index=True, sheet_name = 'Supermetrics table')
             dks_pivot.to_excel(writer, index=False, sheet_name = 'Pivot table')
             writer.close()
 
