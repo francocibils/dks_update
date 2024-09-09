@@ -77,8 +77,8 @@ if app_mode == 'DKS - Sognare':
     raw_df = st.file_uploader('Upload DKS - Sognare file', type = ['xlsx', 'xls', 'csv'])
 
     # Import catalog
-    catalog_product = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%Sognare%20-%20Product.xlsx', engine = 'openpyxl')
-    catalog_channel = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%Sognare%20-%20Channel.xlsx', engine = 'openpyxl')
+    catalog_product = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%20Sognare%20-%20Product.xlsx', engine = 'openpyxl')
+    catalog_channel = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%20Sognare%20-%20Channel.xlsx', engine = 'openpyxl')
 
     if raw_df is not None:
         file_type = get_file_type(raw_df)
