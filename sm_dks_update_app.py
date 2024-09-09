@@ -70,4 +70,47 @@ if app_mode == 'DKS - Inova':
         )
 
 if app_mode == 'DKS - Sognare':
-    pass
+    st.title('DKS - Sognare')
+    st.header('File upload')
+    st.markdown('Upload file to obtain orders and revenue for each Brand and Channel of sale.')
+
+    raw_df = st.file_uploader('Upload DKS - Sognare file', type = ['xlsx', 'xls', 'csv'])
+
+    # Import catalog
+    catalog_product = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%Sognare%20-%20Product.xlsx', engine = 'openpyxl')
+    catalog_channel = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%Sognare%20-%20Channel.xlsx', engine = 'openpyxl')
+
+    if raw_df is not None:
+        file_type = get_file_type(raw_df)
+        
+        if file_type == 'csv':
+            sognare_df = pd.read_csv(raw_df, encoding = 'latin-1')
+        elif file_type == 'xlsx' or file_type == 'xls':
+            sognare_df = pd.read_excel(raw_df)
+        
+        st.success('DKS - Sognare file uploaded successfully.')
+
+    if st.button('Process file'):
+
+        dks_pivot, dks_sm = processing_dks_sognare(sognare_df, catalog_product, catalog_channel)
+
+        st.header('Processed data')
+        st.success('DKS files have been processed successfully.')
+        
+        # Convert the DataFrame to an Excel file in memory
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine = 'xlsxwriter') as writer:
+            dks_sm.to_excel(writer, index=False, sheet_name = 'Supermetrics table')
+            dks_pivot.to_excel(writer, index=False, sheet_name = 'Pivot table')
+            writer.close()
+
+        # Rewind the buffer
+        output.seek(0)
+
+        # Create a download button
+        st.download_button(
+            label = "Download Excel file",
+            data = output,
+            file_name = "DKS.xlsx",
+            mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
