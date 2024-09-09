@@ -75,6 +75,68 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
     result = result[new_columns]
     
     return df, result
+
+def processing_dks_sognare(raw_df, catalog_product, catalog_channel):
+
+    # Keep relevant columns
+    keep_columns = ['Channel', 'Status', 'Fecha', 'Total Products', 'Total Descuento', 'Familia de Producto', 'Orden']
+
+    df = raw_df[keep_columns]
+
+    # Filtering and processing
+    df = df[(df['Status'] != 'Cancelled') & (df['Status'] != 'Void')]
+    df['Total Order'] = df['Total Products'] - df['Total Descuento']
+
+    # Add channel/product
+    df = pd.merge(df, catalog_channel, on = 'Channel', how = 'left')
+    df = pd.merge(df, catalog_product, on = 'Familia de Producto', how = 'left')
+
+    # Create All Sognare category
+    all_sognare = df.groupby(['CANAL', 'Fecha']).agg(Total_Order = ('Total Order', 'sum'), Orders = ('Orden', 'size')).reset_index()
+    all_sognare.columns = ['Channel', 'Date', 'Total', 'Orders']
+    all_sognare['Product category'] = 'ALL SOGNARE'
+
+    # Keep relevant columns
+    df = df[['Fecha', 'Orden', 'CANAL', 'Product Category', 'Total Order']]
+    df.columns = ['Date', 'Order', 'Channel', 'Product category', 'Total']
+
+    df = df.groupby(['Date', 'Product category', 'Channel']).agg(Orders = ('Order', 'size'), Total = ('Total', 'sum')).reset_index()
+
+    # Join All Sognare and specific products
+    df = pd.concat([df, all_sognare]).reset_index().drop(['index'], axis = 1)
+
+    # Define all possible products and channels
+    all_days = df['Date'].unique()
+    all_products = ['ALL SOGNARE'] + catalog_product['Product Category'].unique().tolist()
+    all_channels = catalog_channel['CANAL'].unique()
+
+    # Create a MultiIndex DataFrame with all combinations of products and channels
+    multi_index = pd.MultiIndex.from_product([all_days, all_products, all_channels], names = ['Date', 'Product category', 'Channel'])
+
+    # Reindex the original DataFrame to this new index
+    df_reindexed = df.set_index(['Date', 'Product category', 'Channel']).reindex(multi_index, fill_value = 0).reset_index()
+
+    # Create a new column for the combination of Product family and Channel
+    df_reindexed['Product_Channel'] = df_reindexed['Product category'] + ' - ' + df_reindexed['Channel']
+
+    # Pivot the DataFrame for Orders
+    orders_pivot = df_reindexed.pivot(index = 'Date', columns = 'Product_Channel', values = 'Orders')
+
+    # Pivot the DataFrame for Revenue
+    revenue_pivot = df_reindexed.pivot(index = 'Date', columns = 'Product_Channel', values = 'Total')
+
+    # Combine Orders and Revenue into a single DataFrame
+    result = pd.concat([orders_pivot.add_suffix(' - Orders'), revenue_pivot.add_suffix(' - Revenue')], axis = 1).reset_index()
+
+    # Reorder
+    new_columns = ['Date']
+    for product_channel in orders_pivot.columns:
+        new_columns.append(product_channel + ' - Orders')
+        new_columns.append(product_channel + ' - Revenue')
+
+    result = result[new_columns]
+
+    return df, result
     
 def processing_amazon_sellerboard(amz_df, amz_listing_df, date = False):
 
