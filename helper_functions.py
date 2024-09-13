@@ -37,7 +37,8 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
     all_inova = all_inova.groupby(['Date', 'Channel', 'Product family'])[['Total', 'Orders']].sum().reset_index()
 
     # By product
-    keep_products = ['EAGLE EYES', 'GREEN MARVEL', 'GREEN MARVEL LEGS', 'ROTAFLEX', 'SKOON', 'TERRACOAT BATERIA', 'XTENDER', 'XSHOCK', 'XSHOCK VORTEX', 'UROCAPS', 'SOGNARE ALMOHADA BASE']    df = df[df['Familia de Producto'].isin(keep_products)]
+    keep_products = ['EAGLE EYES', 'GREEN MARVEL', 'GREEN MARVEL LEGS', 'ROTAFLEX', 'SKOON', 'TERRACOAT BATERIA', 'XTENDER', 'XSHOCK', 'XSHOCK VORTEX', 'UROCAPS', 'SOGNARE ALMOHADA BASE']    
+    df = df[df['Familia de Producto'].isin(keep_products)]
 
     df = pd.merge(df, catalog[['ORIGEN DE VENTA', 'CANAL']], how = 'left', left_on = 'Channel', right_on = 'ORIGEN DE VENTA')
     df = df[['Fecha', 'Orden', 'CANAL', 'Familia de Producto', 'Total Order']]
