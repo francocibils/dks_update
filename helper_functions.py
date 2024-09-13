@@ -22,6 +22,7 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
 
     # Filtering and processing
     df = df[(df['Status'] != 'Cancelled') & (df['Status'] != 'Void')]
+    df = df[df['Familia de Producto'] != 'SOGNARE ALMOHADA BASE']
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
     # Create All Inova category
