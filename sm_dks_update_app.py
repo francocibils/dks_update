@@ -75,11 +75,14 @@ if app_mode == 'DKS - Sognare':
     st.markdown('Upload file to obtain orders and revenue for each Brand and Channel of sale.')
 
     raw_df = st.file_uploader('Upload DKS - Sognare file', type = ['xlsx', 'xls', 'csv'])
+    raw_mow = st.file_uploader('Upload DKS - MOW file', type = ['xlsx', 'xls', 'csv'])
+    raw_tkm = st.file_uploader('Upload DKS - TKM file', type = ['xlsx', 'xls', 'csv'])
 
     # Import catalog
     catalog_product = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%20Sognare%20-%20Product.xlsx', engine = 'openpyxl')
     catalog_channel = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%20Sognare%20-%20Channel.xlsx', engine = 'openpyxl')
-
+    catalog_mx = pd.read_excel(r'https://raw.githubusercontent.com/francocibils/dks_update/main/Catalog%20DKS%20MX.xlsx', engine = 'openpyxl')
+    
     if raw_df is not None:
         file_type = get_file_type(raw_df)
         
@@ -89,6 +92,26 @@ if app_mode == 'DKS - Sognare':
             sognare_df = pd.read_excel(raw_df)
         
         st.success('DKS - Sognare file uploaded successfully.')
+
+    if raw_mow is not None:
+        file_type = get_file_type(raw_mow)
+        
+        if file_type == 'csv':
+            mow_df = pd.read_csv(raw_mow, encoding = 'latin-1')
+        elif file_type == 'xlsx' or file_type == 'xls':
+            mow_df = pd.read_excel(raw_mow, encoding = 'latin-1')
+        
+        st.success('DKS - MOW file uploaded successfully.')
+
+    if raw_tkm is not None:
+        file_type = get_file_type(raw_tkm)
+        
+        if file_type == 'csv':
+            tkm_df = pd.read_csv(raw_tkm, encoding = 'latin-1')
+        elif file_type == 'xlsx' or file_type == 'xls':
+            tkm_df = pd.read_excel(raw_tkm, encoding = 'latin-1')
+        
+        st.success('DKS - TKM file uploaded successfully.')
 
     if st.button('Process file'):
 
