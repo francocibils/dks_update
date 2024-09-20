@@ -115,7 +115,7 @@ if app_mode == 'DKS - Sognare':
 
     if st.button('Process file'):
 
-        dks_pivot, dks_sm = processing_dks_sognare(sognare_df, catalog_product, catalog_channel)
+        dks_pivot, dks_sm = processing_dks_sognare(sognare_df, catalog_product, catalog_channel, add_inova_products = [mow_df, tkm_df, catalog_mx])
 
         st.header('Processed data')
         st.success('DKS files have been processed successfully.')
