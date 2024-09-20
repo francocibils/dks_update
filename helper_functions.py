@@ -77,7 +77,7 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
     
     return df, result
 
-def processing_dks_sognare(raw_df, catalog_product, catalog_channel):
+def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_products = None):
 
     # Keep relevant columns
     keep_columns = ['Channel', 'Status', 'Fecha', 'Total Products', 'Total Descuento', 'Familia de Producto', 'Orden']
@@ -91,6 +91,36 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel):
     # Add channel/product
     df = pd.merge(df, catalog_channel, on = 'Channel', how = 'left')
     df = pd.merge(df, catalog_product, on = 'Familia de Producto', how = 'left')
+
+    # Add Inova MX and TKM products: Almohada base
+    if add_inova_products:
+        raw_mow = add_inova_products[0]
+        raw_tkm = add_inova_products[1]
+        mow_catalog = add_inova_products[2]
+
+        # Keep relevant columns
+        keep_columns = ['Channel', 'Status', 'Fecha', 'Total Products', 'Total Descuento', 'Familia de Producto', 'Orden']
+
+        raw_mow = raw_mow[keep_columns]
+        raw_tkm = raw_tkm[keep_columns]
+
+        # Join dfs
+        df_dks = pd.concat([raw_mow, raw_tkm])
+
+        # Filtering and processing
+        df_dks = df_dks[(df_dks['Status'] != 'Cancelled') & (df_dks['Status'] != 'Void')]
+        df_dks['Total Order'] = df_dks['Total Products'] - df_dks['Total Descuento']
+        mow_catalog['CANAL'] = mow_catalog['CANAL'].replace({'WEB SELF SERVICES': 'WEB SELF SERVICE'})
+
+        # By product
+        keep_products = ['SOGNARE ALMOHADA BASE']
+        df_dks = df_dks[df_dks['Familia de Producto'].isin(keep_products)]
+
+        df_dks = pd.merge(df_dks, mow_catalog[['ORIGEN DE VENTA', 'CANAL']], how = 'left', left_on = 'Channel', right_on = 'ORIGEN DE VENTA')
+        df_dks = df_dks.drop(['ORIGEN DE VENTA'], axis = 1)
+        df_dks['Product Category'] = 'ALMOHADA'
+
+        df = pd.concat([df, df_dks])
 
     # Create All Sognare category
     all_sognare = df.groupby(['CANAL', 'Fecha']).agg(Total_Order = ('Total Order', 'sum'), Orders = ('Orden', 'size')).reset_index()
