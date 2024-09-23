@@ -139,7 +139,7 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
     # Define all possible products and channels
     all_days = df['Date'].unique()
     all_products = ['ALL SOGNARE'] + catalog_product['Product Category'].unique().tolist()
-    all_channels = catalog_channel['CANAL'].unique()
+    all_channels = list(set(catalog_channel['CANAL'].unique().tolist() + mow_catalog['CANAL'].unique().tolist()))
 
     # Create a MultiIndex DataFrame with all combinations of products and channels
     multi_index = pd.MultiIndex.from_product([all_days, all_products, all_channels], names = ['Date', 'Product category', 'Channel'])
