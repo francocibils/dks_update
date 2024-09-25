@@ -39,6 +39,7 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
     # By product
     keep_products = ['EAGLE EYES', 'GREEN MARVEL', 'GREEN MARVEL LEGS', 'ROTAFLEX', 'SKOON', 'TERRACOAT BATERIA', 'XTENDER', 'XSHOCK', 'XSHOCK VORTEX', 'UROCAPS', 'SOGNARE ALMOHADA BASE']    
     df = df[df['Familia de Producto'].isin(keep_products)]
+    df['Familia de Producto'] = df['Familia de Producto'].replace('XSHOCK VORTEX', 'XSHOCK')
 
     df = pd.merge(df, catalog[['ORIGEN DE VENTA', 'CANAL']], how = 'left', left_on = 'Channel', right_on = 'ORIGEN DE VENTA')
     df = df[['Fecha', 'Orden', 'CANAL', 'Familia de Producto', 'Total Order']]
