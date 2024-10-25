@@ -21,7 +21,7 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
     df = pd.concat([raw_mow, raw_tkm])
 
     # Filtering and processing
-    df = df[(df['Status'] != 'Cancelled') & (df['Status'] != 'Void')]
+    df = df[df['Status'] != 'Void']
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
     # Create All Inova category
@@ -89,7 +89,7 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
     df = raw_df[keep_columns]
 
     # Filtering and processing
-    df = df[(df['Status'] != 'Cancelled') & (df['Status'] != 'Void')]
+    df = df[df['Status'] != 'Void']
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
     # Add channel/product
