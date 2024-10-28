@@ -21,7 +21,7 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
     df = pd.concat([raw_mow, raw_tkm])
 
     # Filtering and processing
-    df = df[df['Status'] != 'Void']
+    # df = df[df['Status'] != 'Void']
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
     # Create All Inova category
@@ -89,7 +89,7 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
     df = raw_df[keep_columns]
 
     # Filtering and processing
-    df = df[df['Status'] != 'Void']
+    # df = df[df['Status'] != 'Void']
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
     # Add channel/product
@@ -112,7 +112,7 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
         df_dks = pd.concat([raw_mow, raw_tkm])
 
         # Filtering and processing
-        df_dks = df_dks[(df_dks['Status'] != 'Cancelled') & (df_dks['Status'] != 'Void')]
+        # df_dks = df_dks[(df_dks['Status'] != 'Cancelled') & (df_dks['Status'] != 'Void')]
         df_dks['Total Order'] = df_dks['Total Products'] - df_dks['Total Descuento']
         mow_catalog['CANAL'] = mow_catalog['CANAL'].replace({'WEB SELF SERVICES': 'WEB SELF SERVICE'})
 
