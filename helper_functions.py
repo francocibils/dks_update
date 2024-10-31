@@ -81,6 +81,30 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
     
     return df, result
 
+def processing_dks_inova_payment(raw_mow, raw_tkm, catalog):
+    # Keep relevant columns
+    keep_columns = ['Channel', 'Fecha', 'Familia de Producto', 'Orden', 'TPago']
+    
+    raw_mow = raw_mow[keep_columns]
+    raw_tkm = raw_tkm[keep_columns]
+    
+    # Join dfs
+    df = pd.concat([raw_mow, raw_tkm])
+    
+    # Create All Inova category
+    temp_df = df[~df['Familia de Producto'].isin(['SOGNARE ALMOHADA BASE', 'EAGLE EYES'])]
+    temp_df = df.groupby(['Fecha', 'Channel', 'TPago'])[['Orden']].count().reset_index()
+    temp_df.columns = ['Date', 'Channel', 'Payment method', 'Count']
+    
+    all_inova_payment = pd.merge(temp_df, catalog[['ORIGEN DE VENTA', 'CANAL']], how = 'left', left_on = 'Channel', right_on = 'ORIGEN DE VENTA')
+    all_inova_payment = all_inova_payment[['Date', 'CANAL', 'Payment method', 'Count']]
+    all_inova_payment.columns = ['Date', 'Channel', 'Payment method', 'Count']
+    all_inova_payment = all_inova_payment[all_inova_payment['Channel'].isin(['WEB ASISTIDA', 'WEB SELF SERVICES'])]
+    
+    all_inova_payment = all_inova_payment.groupby(['Date', 'Payment method'])[['Count']].sum().reset_index()
+
+    return all_inova_payment
+
 def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_products = None):
 
     # Keep relevant columns
