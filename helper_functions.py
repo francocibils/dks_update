@@ -102,7 +102,7 @@ def processing_dks_inova_payment(raw_mow, raw_tkm, catalog):
     all_inova_payment = all_inova_payment[all_inova_payment['Channel'].isin(['WEB ASISTIDA', 'WEB SELF SERVICES'])]
     
     all_inova_payment = all_inova_payment.groupby(['Date', 'Payment method'])[['Count']].sum().reset_index()
-    pivot_df = all_inova_payment.pivot_table(index = 'Date', columns = 'Payment method', values = 'Count', fill_value = 0)
+    pivot_df = all_inova_payment.pivot_table(index = 'Date', columns = 'Payment method', values = 'Count', fill_value = 0).reset_index()
 
     return pivot_df
 
