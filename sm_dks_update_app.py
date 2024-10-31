@@ -47,6 +47,7 @@ if app_mode == 'DKS - Inova':
     if st.button('Process file'):
 
         dks_pivot, dks_sm = processing_dks_inova(mow_df, tkm_df, catalog_df)
+        dks_payment = processing_dks_inova_payment(mow_df, tkm_df, catalog_df)
 
         st.header('Processed data')
         st.success('DKS files have been processed successfully.')
@@ -56,6 +57,7 @@ if app_mode == 'DKS - Inova':
         with pd.ExcelWriter(output, engine = 'xlsxwriter') as writer:
             dks_sm.to_excel(writer, index = False, sheet_name = 'Supermetrics table')
             dks_pivot.to_excel(writer, index = False, sheet_name = 'Pivot table')
+            dks_payment.to_excel(writer, index = False, sheet_name = 'Payment table')
             writer.close()
 
         # Rewind the buffer
