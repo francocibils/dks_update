@@ -25,7 +25,7 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
     # Create All Inova category
-    temp_df = df[df['Familia de Producto'] != 'SOGNARE ALMOHADA BASE']
+    temp_df = df[~df['Familia de Producto'].isin(['SOGNARE ALMOHADA BASE', 'EAGLE EYES'])]
     all_inova = temp_df.groupby(['Channel', 'Fecha']).agg(Total_Order = ('Total Order', 'sum'), Orders = ('Orden', 'size')).reset_index()
     all_inova.columns = ['Channel', 'Date', 'Total Order', 'Orders']
     all_inova['Product family'] = 'ALL INOVA'
