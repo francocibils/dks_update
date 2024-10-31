@@ -57,7 +57,7 @@ if app_mode == 'DKS - Inova':
         with pd.ExcelWriter(output, engine = 'xlsxwriter') as writer:
             dks_sm.to_excel(writer, index = False, sheet_name = 'Supermetrics table')
             dks_pivot.to_excel(writer, index = False, sheet_name = 'Pivot table')
-            dks_payment.to_excel(writer, index = False, sheet_name = 'Payment table')
+            dks_payment.to_excel(writer, index = True, sheet_name = 'Payment table')
             writer.close()
 
         # Rewind the buffer
