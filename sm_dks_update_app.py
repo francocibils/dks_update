@@ -46,7 +46,8 @@ if app_mode == 'DKS - Inova':
 
     if st.button('Process file'):
 
-        dks_pivot, dks_sm = processing_dks_inova(mow_df, tkm_df, catalog_df)
+        dks_pivot_cobranza, dks_sm_cobranza = processing_dks_inova(mow_df, tkm_df, catalog_df, cobranza = True)
+        dks_pivot, dks_sm = processing_dks_inova(mow_df, tkm_df, catalog_df, cobranza = False)
         dks_payment = processing_dks_inova_payment(mow_df, tkm_df, catalog_df)
 
         st.header('Processed data')
@@ -56,7 +57,7 @@ if app_mode == 'DKS - Inova':
         output = BytesIO()
         with pd.ExcelWriter(output, engine = 'xlsxwriter') as writer:
             dks_sm.to_excel(writer, index = False, sheet_name = 'Supermetrics table')
-            dks_pivot.to_excel(writer, index = False, sheet_name = 'Pivot table')
+            dks_sm_cobranza.to_excel(writer, index = False, sheet_name = 'Supermetrics table - Cobranza')
             dks_payment.to_excel(writer, index = False, sheet_name = 'Payment table')
             writer.close()
 
@@ -117,7 +118,8 @@ if app_mode == 'DKS - Sognare':
 
     if st.button('Process file'):
 
-        dks_pivot, dks_sm = processing_dks_sognare(sognare_df, catalog_product, catalog_channel, add_inova_products = [mow_df, tkm_df, catalog_mx])
+        dks_pivot_cobranza, dks_sm_cobranza = processing_dks_sognare(sognare_df, catalog_product, catalog_channel, add_inova_products = [mow_df, tkm_df, catalog_mx], cobranza = True)
+        dks_pivot, dks_sm = processing_dks_sognare(sognare_df, catalog_product, catalog_channel, add_inova_products = [mow_df, tkm_df, catalog_mx], cobranza = False)
 
         st.header('Processed data')
         st.success('DKS files have been processed successfully.')
@@ -126,7 +128,7 @@ if app_mode == 'DKS - Sognare':
         output = BytesIO()
         with pd.ExcelWriter(output, engine = 'xlsxwriter') as writer:
             dks_sm.to_excel(writer, index=False, sheet_name = 'Supermetrics table')
-            dks_pivot.to_excel(writer, index=False, sheet_name = 'Pivot table')
+            dks_sm_cobranza.to_excel(writer, index=False, sheet_name = 'Supermetrics table - Cobranza')
             writer.close()
 
         # Rewind the buffer
