@@ -9,7 +9,7 @@ def get_file_type(file):
     elif file.name.endswith(".xls"):
         return 'xls'
     
-def processing_dks_inova(raw_mow, raw_tkm, catalog):
+def processing_dks_inova(raw_mow, raw_tkm, catalog, cobranza = True):
 
     # Keep relevant columns
     keep_columns = ['Channel', 'Status', 'Fecha', 'Total Products', 'Total Descuento', 'Familia de Producto', 'Orden']
@@ -21,7 +21,9 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog):
     df = pd.concat([raw_mow, raw_tkm])
 
     # Filtering and processing
-    # df = df[df['Status'] != 'Void']
+    if cobranza:
+        df = df[(df['Status'] != 'Void') & (df['Status'] != 'Cancelled')]
+        
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
     # Create All Inova category
@@ -106,7 +108,7 @@ def processing_dks_inova_payment(raw_mow, raw_tkm, catalog):
 
     return pivot_df
 
-def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_products = None):
+def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_products = None, cobranza = True):
 
     # Keep relevant columns
     keep_columns = ['Channel', 'Status', 'Fecha', 'Total Products', 'Total Descuento', 'Familia de Producto', 'Orden']
@@ -114,7 +116,9 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
     df = raw_df[keep_columns]
 
     # Filtering and processing
-    # df = df[df['Status'] != 'Void']
+    if cobranza:
+        df = df[(df['Status'] != 'Void') & (df['Status'] != 'Cancelled')]
+        
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
     # Add channel/product
