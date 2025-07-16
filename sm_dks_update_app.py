@@ -33,7 +33,7 @@ if app_mode == 'DKS - Inova':
         if file_type == 'csv':
             tkm_df = pd.read_csv(raw_tkm, encoding = 'latin-1')
         elif file_type == 'xlsx' or file_type == 'xls':
-            tkm_df = pd.read_excel(raw_tkm')
+            tkm_df = pd.read_excel(raw_tkm)
         
         st.success('DKS - TKM file uploaded successfully.')
 
