@@ -108,15 +108,17 @@ def processing_dks_inova_payment(raw_mow, raw_tkm, catalog):
 
     return pivot_df
 
-def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_products = None):
+def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_products = None, cobranza = True):
+
     # Keep relevant columns
     keep_columns = ['Channel', 'Status', 'Fecha', 'Total Products', 'Total Descuento', 'Familia de Producto', 'Orden']
 
     df = raw_df[keep_columns]
-    df['Fecha'] = pd.to_datetime(df['Fecha'])
 
     # Filtering and processing
-    df = df[(df['Status'] != 'Cancelled') & (df['Status'] != 'Void')]
+    if cobranza:
+        df = df[(df['Status'] != 'Void') & (df['Status'] != 'Cancelled')]
+        
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
     # Add channel/product
@@ -137,10 +139,8 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
 
         # Join dfs
         df_dks = pd.concat([raw_mow, raw_tkm])
-        df_dks['Fecha'] = pd.to_datetime(df_dks['Fecha'])
 
         # Filtering and processing
-        df_dks = df_dks[(df_dks['Status'] != 'Cancelled') & (df_dks['Status'] != 'Void')]
         df_dks['Total Order'] = df_dks['Total Products'] - df_dks['Total Descuento']
         mow_catalog['CANAL'] = mow_catalog['CANAL'].replace({'WEB SELF SERVICES': 'WEB SELF SERVICE'})
 
@@ -171,10 +171,7 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
     # Define all possible products and channels
     all_days = df['Date'].unique()
     all_products = ['ALL SOGNARE'] + catalog_product['Product Category'].unique().tolist()
-    if add_inova_products:
-        all_channels = list(set(catalog_channel['CANAL'].unique().tolist() + mow_catalog['CANAL'].unique().tolist()))
-    else:
-        all_channels = catalog_channel['CANAL'].unique().tolist()
+    all_channels = list(set(catalog_channel['CANAL'].unique().tolist() + (mow_catalog['CANAL'].unique().tolist() if add_inova_products else [])))
 
     # Create a MultiIndex DataFrame with all combinations of products and channels
     multi_index = pd.MultiIndex.from_product([all_days, all_products, all_channels], names = ['Date', 'Product category', 'Channel'])
@@ -199,10 +196,10 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
     for product_channel in orders_pivot.columns:
         new_columns.append(product_channel + ' - Orders')
         new_columns.append(product_channel + ' - Revenue')
-    result = result[new_columns]
-    result['Date'] = pd.to_datetime(result['Date'])
 
-    # Reordenar columnas: mover ciertos productos/canales al final
+    result = result[new_columns]
+
+    # Reordenar columnas: mover productos/canales específicos al final
     move_to_end = []
     keep_columns = ['Date']
     for col in result.columns:
@@ -215,7 +212,6 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
         else:
             keep_columns.append(col)
 
-    # Agregar al final los que queremos mover
     final_columns = keep_columns + move_to_end
     result = result[final_columns]
 
