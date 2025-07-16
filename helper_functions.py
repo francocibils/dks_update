@@ -74,10 +74,18 @@ def processing_dks_inova(raw_mow, raw_tkm, catalog, cobranza = True):
     # Combine Orders and Revenue into a single DataFrame
     result = pd.concat([orders_pivot.add_suffix(' - Orders'), revenue_pivot.add_suffix(' - Revenue')], axis = 1).reset_index()
 
-    # Reordenar columnas: mover canales específicos al final
-    move_to_end = []
-    keep_columns = ['Date']
+    # Reorder base (no mover aún)
+    new_columns = ['Date']
+    for product_channel in orders_pivot.columns:
+        new_columns.append(product_channel + ' - Orders')
+        new_columns.append(product_channel + ' - Revenue')
+
+    result = result[new_columns]
+
+    # 🔁 Reordenar: mover columnas específicas al final
     canales_al_final = ['EAGLE EYES WEB ASISTIDA', 'EAGLE EYES WEB SELF SERVICE', 'SUPER SOFIA IA', 'TIKTOK']
+    keep_columns = ['Date']
+    move_to_end = []
 
     for col in result.columns:
         if col == 'Date':
