@@ -151,22 +151,28 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
         mow_catalog['CANAL'] = mow_catalog['CANAL'].replace({'WEB SELF SERVICES': 'WEB SELF SERVICE'})
 
         # Filter only the Almohada base product
-        df_dks = df_dks[df_dks['Familia de Producto'].isin(['SOGNARE ALMOHADA BASE'])]
+        df_dks = df_dks[df_dks['Familia de Producto'] == 'SOGNARE ALMOHADA BASE']
         df_dks = pd.merge(df_dks, mow_catalog[['ORIGEN DE VENTA', 'CANAL']], how = 'left', left_on = 'Channel', right_on = 'ORIGEN DE VENTA')
-        df_dks = df_dks.drop(['ORIGEN DE VENTA'], axis = 1)
+        df_dks = df_dks.drop(columns = ['ORIGEN DE VENTA'])
         df_dks['Product Category'] = 'ALMOHADA'
 
         df = pd.concat([df, df_dks], axis = 0)
 
     # Create "All Sognare" category
-    all_sognare = df.groupby(['CANAL', 'Fecha']).agg(Total_Order = ('Total Order', 'sum'), Orders = ('Orden', 'size')).reset_index()
+    all_sognare = df.groupby(['CANAL', 'Fecha']).agg(
+        Total_Order = ('Total Order', 'sum'),
+        Orders = ('Orden', 'size')
+    ).reset_index()
     all_sognare.columns = ['Channel', 'Date', 'Total', 'Orders']
     all_sognare['Product category'] = 'ALL SOGNARE'
 
     # Prepare df for aggregation
     df = df[['Fecha', 'Orden', 'CANAL', 'Product Category', 'Total Order']]
     df.columns = ['Date', 'Order', 'Channel', 'Product category', 'Total']
-    df = df.groupby(['Date', 'Product category', 'Channel']).agg(Orders = ('Order', 'size'), Total = ('Total', 'sum')).reset_index()
+    df = df.groupby(['Date', 'Product category', 'Channel']).agg(
+        Orders = ('Order', 'size'),
+        Total = ('Total', 'sum')
+    ).reset_index()
 
     # Combine specific products and All Sognare
     df = pd.concat([df, all_sognare], axis = 0).reset_index(drop = True)
@@ -174,32 +180,61 @@ def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_p
     # Define full index space
     all_days = df['Date'].unique()
     all_products = ['ALL SOGNARE'] + catalog_product['Product Category'].unique().tolist()
-    all_channels = list(set(catalog_channel['CANAL'].unique().tolist() + (mow_catalog['CANAL'].unique().tolist() if add_inova_products else [])))
+    all_channels = list(
+        set(
+            catalog_channel['CANAL'].unique().tolist() +
+            (mow_catalog['CANAL'].unique().tolist() if add_inova_products else [])
+        )
+    )
 
-    multi_index = pd.MultiIndex.from_product([all_days, all_products, all_channels], names = ['Date', 'Product category', 'Channel'])
-    df_reindexed = df.set_index(['Date', 'Product category', 'Channel']).reindex(multi_index, fill_value = 0).reset_index()
-    df_reindexed['Product_Channel'] = df_reindexed['Product category'] + ' - ' + df_reindexed['Channel']
+    multi_index = pd.MultiIndex.from_product(
+        [all_days, all_products, all_channels],
+        names = ['Date', 'Product category', 'Channel']
+    )
+    df_reindexed = (
+        df
+        .set_index(['Date', 'Product category', 'Channel'])
+        .reindex(multi_index, fill_value = 0)
+        .reset_index()
+    )
+    df_reindexed['Product_Channel'] = (
+        df_reindexed['Product category'] + ' - ' + df_reindexed['Channel']
+    )
 
     # Pivot
-    orders_pivot = df_reindexed.pivot(index = 'Date', columns = 'Product_Channel', values = 'Orders')
-    revenue_pivot = df_reindexed.pivot(index = 'Date', columns = 'Product_Channel', values = 'Total')
-    result = pd.concat([orders_pivot.add_suffix(' - Orders'), revenue_pivot.add_suffix(' - Revenue')], axis = 1).reset_index()
+    orders_pivot = df_reindexed.pivot(
+        index = 'Date',
+        columns = 'Product_Channel',
+        values = 'Orders'
+    )
+    revenue_pivot = df_reindexed.pivot(
+        index = 'Date',
+        columns = 'Product_Channel',
+        values = 'Total'
+    )
+    result = pd.concat(
+        [orders_pivot.add_suffix(' - Orders'), revenue_pivot.add_suffix(' - Revenue')],
+        axis = 1
+    ).reset_index()
 
     # Base reorder
     new_columns = ['Date']
-    for product_channel in orders_pivot.columns:
-        new_columns.append(product_channel + ' - Orders')
-        new_columns.append(product_channel + ' - Revenue')
+    for pc in orders_pivot.columns:
+        new_columns.append(pc + ' - Orders')
+        new_columns.append(pc + ' - Revenue')
     result = result[new_columns]
 
-    # 🔁 Reordenar: mover columnas específicas al final
-    canales_al_final = ['SUPER SOFIA IA', 'BACTICURE', 'PULSERA FORTUNARA', 'SOGNARE COLCHON BIOFLEX']
-    keep_cols = ['Date']
+    # 🔁 Reordenar columnas: mover productos/canales específicos al final
     move_to_end = []
+    keep_cols = ['Date']
     for col in result.columns:
         if col == 'Date':
             continue
-        if any(canal in col for canal in canales_al_final):
+        channel_match = 'SUPER SOFIA IA' in col
+        product_match = any(
+            p in col for p in ['BACTICURE', 'PULSERA FORTUNARA', 'SOGNARE COLCHON BIOFLEX']
+        )
+        if channel_match or product_match:
             move_to_end.append(col)
         else:
             keep_cols.append(col)
