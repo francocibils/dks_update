@@ -126,110 +126,84 @@ def processing_dks_inova_payment(raw_mow, raw_tkm, catalog):
     return pivot_df
 
 def processing_dks_sognare(raw_df, catalog_product, catalog_channel, add_inova_products = None, cobranza = True):
-
     # Keep relevant columns
     keep_columns = ['Channel', 'Status', 'Fecha', 'Total Products', 'Total Descuento', 'Familia de Producto', 'Orden']
-
     df = raw_df[keep_columns]
 
     # Filtering and processing
     if cobranza:
         df = df[(df['Status'] != 'Void') & (df['Status'] != 'Cancelled')]
-        
     df['Total Order'] = df['Total Products'] - df['Total Descuento']
 
-    # Add channel/product
+    # Add channel/product metadata
     df = pd.merge(df, catalog_channel, on = 'Channel', how = 'left')
     df = pd.merge(df, catalog_product, on = 'Familia de Producto', how = 'left')
 
-    # Add Inova MX and TKM products: Almohada base
+    # Optional: add Inova MX and TKM products (Almohada base)
     if add_inova_products:
-        raw_mow = add_inova_products[0]
-        raw_tkm = add_inova_products[1]
-        mow_catalog = add_inova_products[2]
+        raw_mow, raw_tkm, mow_catalog = add_inova_products
+        raw_keep = ['Channel', 'Status', 'Fecha', 'Total Products', 'Total Descuento', 'Familia de Producto', 'Orden']
+        raw_mow = raw_mow[raw_keep]
+        raw_tkm = raw_tkm[raw_keep]
 
-        # Keep relevant columns
-        keep_columns = ['Channel', 'Status', 'Fecha', 'Total Products', 'Total Descuento', 'Familia de Producto', 'Orden']
-
-        raw_mow = raw_mow[keep_columns]
-        raw_tkm = raw_tkm[keep_columns]
-
-        # Join dfs
         df_dks = pd.concat([raw_mow, raw_tkm])
-
-        # Filtering and processing
         df_dks['Total Order'] = df_dks['Total Products'] - df_dks['Total Descuento']
         mow_catalog['CANAL'] = mow_catalog['CANAL'].replace({'WEB SELF SERVICES': 'WEB SELF SERVICE'})
 
-        # By product
-        keep_products = ['SOGNARE ALMOHADA BASE']
-        df_dks = df_dks[df_dks['Familia de Producto'].isin(keep_products)]
-
+        # Filter only the Almohada base product
+        df_dks = df_dks[df_dks['Familia de Producto'].isin(['SOGNARE ALMOHADA BASE'])]
         df_dks = pd.merge(df_dks, mow_catalog[['ORIGEN DE VENTA', 'CANAL']], how = 'left', left_on = 'Channel', right_on = 'ORIGEN DE VENTA')
         df_dks = df_dks.drop(['ORIGEN DE VENTA'], axis = 1)
         df_dks['Product Category'] = 'ALMOHADA'
 
-        df = pd.concat([df, df_dks])
+        df = pd.concat([df, df_dks], axis = 0)
 
-    # Create All Sognare category
+    # Create "All Sognare" category
     all_sognare = df.groupby(['CANAL', 'Fecha']).agg(Total_Order = ('Total Order', 'sum'), Orders = ('Orden', 'size')).reset_index()
     all_sognare.columns = ['Channel', 'Date', 'Total', 'Orders']
     all_sognare['Product category'] = 'ALL SOGNARE'
 
-    # Keep relevant columns
+    # Prepare df for aggregation
     df = df[['Fecha', 'Orden', 'CANAL', 'Product Category', 'Total Order']]
     df.columns = ['Date', 'Order', 'Channel', 'Product category', 'Total']
-
     df = df.groupby(['Date', 'Product category', 'Channel']).agg(Orders = ('Order', 'size'), Total = ('Total', 'sum')).reset_index()
 
-    # Join All Sognare and specific products
-    df = pd.concat([df, all_sognare]).reset_index().drop(['index'], axis = 1)
+    # Combine specific products and All Sognare
+    df = pd.concat([df, all_sognare], axis = 0).reset_index(drop = True)
 
-    # Define all possible products and channels
+    # Define full index space
     all_days = df['Date'].unique()
     all_products = ['ALL SOGNARE'] + catalog_product['Product Category'].unique().tolist()
     all_channels = list(set(catalog_channel['CANAL'].unique().tolist() + (mow_catalog['CANAL'].unique().tolist() if add_inova_products else [])))
 
-    # Create a MultiIndex DataFrame with all combinations of products and channels
     multi_index = pd.MultiIndex.from_product([all_days, all_products, all_channels], names = ['Date', 'Product category', 'Channel'])
-
-    # Reindex the original DataFrame to this new index
     df_reindexed = df.set_index(['Date', 'Product category', 'Channel']).reindex(multi_index, fill_value = 0).reset_index()
-
-    # Create a new column for the combination of Product family and Channel
     df_reindexed['Product_Channel'] = df_reindexed['Product category'] + ' - ' + df_reindexed['Channel']
 
-    # Pivot the DataFrame for Orders
+    # Pivot
     orders_pivot = df_reindexed.pivot(index = 'Date', columns = 'Product_Channel', values = 'Orders')
-
-    # Pivot the DataFrame for Revenue
     revenue_pivot = df_reindexed.pivot(index = 'Date', columns = 'Product_Channel', values = 'Total')
-
-    # Combine Orders and Revenue into a single DataFrame
     result = pd.concat([orders_pivot.add_suffix(' - Orders'), revenue_pivot.add_suffix(' - Revenue')], axis = 1).reset_index()
 
-    # Reorder
+    # Base reorder
     new_columns = ['Date']
     for product_channel in orders_pivot.columns:
         new_columns.append(product_channel + ' - Orders')
         new_columns.append(product_channel + ' - Revenue')
-
     result = result[new_columns]
 
-    # Reordenar columnas: mover productos/canales específicos al final
+    # 🔁 Reordenar: mover columnas específicas al final
+    canales_al_final = ['SUPER SOFIA IA', 'BACTICURE', 'PULSERA FORTUNARA', 'SOGNARE COLCHON BIOFLEX']
+    keep_cols = ['Date']
     move_to_end = []
-    keep_columns = ['Date']
     for col in result.columns:
         if col == 'Date':
             continue
-        channel_match = 'SUPER SOFIA IA' in col
-        product_match = any(p in col for p in ['BACTICURE', 'PULSERA FORTUNARA', 'SOGNARE COLCHON BIOFLEX'])
-        if channel_match or product_match:
+        if any(canal in col for canal in canales_al_final):
             move_to_end.append(col)
         else:
-            keep_columns.append(col)
-
-    final_columns = keep_columns + move_to_end
+            keep_cols.append(col)
+    final_columns = keep_cols + move_to_end
     result = result[final_columns]
 
     return df, result
